@@ -1,9 +1,17 @@
+from src.events import preserve_for_later_inspection
+
+
 class EventStore:
     def __init__(self):
         self.events = []
         self.pending_inspection = []
 
     def add(self, event):
+        if not event.type:
+            self.preserve(
+                preserve_for_later_inspection(event, reason="event type is unknown")
+            )
+            return
         self.events.append(event)
 
     def preserve(self, event):

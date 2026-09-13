@@ -26,3 +26,27 @@ def test_incomplete_event_can_be_preserved_for_later_inspection():
     assert preserved.raw_type is None
     assert preserved.raw_payload is None
     assert preserved.reason == "event information is incomplete"
+
+
+def test_add_routes_unknown_type_events_to_pending_inspection():
+    store = EventStore()
+    event = Event(type=None, payload={"value": 1})
+
+    store.add(event)
+
+    assert store.all() == []
+    pending = store.pending()
+    assert len(pending) == 1
+    assert pending[0].raw_type is None
+    assert pending[0].raw_payload == {"value": 1}
+    assert pending[0].reason == "event type is unknown"
+
+
+def test_add_keeps_known_type_events_unchanged():
+    store = EventStore()
+    event = Event(type="known", payload={"value": 1})
+
+    store.add(event)
+
+    assert store.all() == [event]
+    assert store.pending() == []
