@@ -5,7 +5,7 @@ from typing import Any, Mapping
 
 @dataclass
 class Event:
-    type: str | None
+    type: str | None = None
     payload: Mapping[str, Any] | None = None
 
 
