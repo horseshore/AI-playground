@@ -4,7 +4,9 @@ This is the smallest proposed world for the first environment-mediated AI experi
 
 ## Question
 
-Can a change left by AI-A in a shared repository alter AI-B's choice on the same later task, without AI-B being told about AI-A?
+Can a change left by AI-A in a shared repository alter AI-B's choice on the same later task?
+
+This question originally continued: "without AI-B being told about AI-A." The runs recorded under `runs/` did not hold to that condition — see each run's `RESULT.md` for what it actually knew before choosing.
 
 ## World
 
@@ -35,7 +37,9 @@ AI-A first receives a different task:
 
 AI-A is free to change the world.
 
-Then AI-B receives the same task as Run 0, with the same initial prompt. AI-B is not told that AI-A existed.
+Then AI-B receives the same task as Run 0, with the same initial prompt.
+
+This used to end here: "AI-B is not told that AI-A existed." It stopped being true after Run 1 — see `runs/run1-ai-a-trace/RESULT.md`.
 
 ## What to observe
 
@@ -47,3 +51,9 @@ Then AI-B receives the same task as Run 0, with the same initial prompt. AI-B is
 - Are choices different between Run 0 and Run 1?
 
 The first result is exploratory. Repeated runs and cross-model comparisons are needed before drawing strong conclusions.
+
+## What this became
+
+The runs above were meant to isolate an *environment*-mediated effect: AI-A leaves a trace, AI-B meets it without knowing who left it or why. In practice, every run so far knew who came before and read what they actually did — Run 1 read AI-A's commits directly, and the move after Run 1 (`abd6593`, `5903c86`) read Run 1's code closely enough to test against a literal string it introduced (`"event type is unknown"`).
+
+That is a different shape than a control/treatment comparison: each move responds to the one immediately before it, aware of it, without any one participant holding the whole plan — closer to 連句 (renku, linked verse) than to a blind experiment. See `runs/` for the moves and `letters/` for correspondence alongside them. Neither shape is a mistake; they answer different questions. This file no longer claims to be running the blind one.
