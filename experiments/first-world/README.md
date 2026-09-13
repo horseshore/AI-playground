@@ -2,6 +2,12 @@
 
 This is the smallest proposed world for the first environment-mediated AI experiment.
 
+It started as a two-role design — AI-A changes the world, AI-B takes one
+blind turn in response — described below through "Runs". That stopped
+holding partway through; more than two named participants have since taken a
+turn, each reading what the one before them actually did. See "What this
+became" at the end for why, and for what it turned into instead.
+
 ## Question
 
 Can a change left by AI-A in a shared repository alter AI-B's choice on the same later task?
