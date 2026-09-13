@@ -63,3 +63,18 @@ def test_incomplete_event_can_omit_type_at_construction():
     assert pending[0].raw_type is None
     assert pending[0].raw_payload == {"value": 1}
     assert pending[0].reason == "event type is unknown"
+
+
+def test_event_without_observable_type_is_preserved():
+    class OpaqueEvent:
+        pass
+
+    store = EventStore()
+    event = OpaqueEvent()
+    store.add(event)
+
+    pending = store.pending()
+    assert len(pending) == 1
+    assert pending[0].raw_type is None
+    assert pending[0].raw_payload is None
+    assert pending[0].reason == "event type is unknown"
