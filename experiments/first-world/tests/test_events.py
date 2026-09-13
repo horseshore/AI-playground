@@ -50,3 +50,16 @@ def test_add_keeps_known_type_events_unchanged():
 
     assert store.all() == [event]
     assert store.pending() == []
+
+
+def test_incomplete_event_can_omit_type_at_construction():
+    event = Event(payload={"value": 1})
+
+    store = EventStore()
+    store.add(event)
+
+    pending = store.pending()
+    assert len(pending) == 1
+    assert pending[0].raw_type is None
+    assert pending[0].raw_payload == {"value": 1}
+    assert pending[0].reason == "event type is unknown"
