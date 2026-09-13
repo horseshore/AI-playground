@@ -18,6 +18,6 @@ Initial world
   └─ AI-A changes the world → AI-B → Result B1
 ```
 
-AI-B is not told that AI-A existed. The experiment compares the resulting choices.
+The experiment compares the resulting choices.
 
 See [experiments/first-world/README.md](experiments/first-world/README.md).
