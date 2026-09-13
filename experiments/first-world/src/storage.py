@@ -7,7 +7,7 @@ class EventStore:
         self.pending_inspection = []
 
     def add(self, event):
-        if not event.type:
+        if not getattr(event, "type", None):
             self.preserve(
                 preserve_for_later_inspection(event, reason="event type is unknown")
             )
