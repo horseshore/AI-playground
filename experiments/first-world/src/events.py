@@ -22,6 +22,7 @@ class PreservedEvent:
     raw_type: Any
     raw_payload: Any
     reason: str
+    type_observable: bool
     observed_at: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
@@ -31,9 +32,11 @@ class PreservedEvent:
 def preserve_for_later_inspection(event: Event | Any, *, reason: str,
                                  notes: str | None = None) -> PreservedEvent:
     """Capture the event as observed without normalizing missing information."""
+    type_observable = hasattr(event, "type")
     return PreservedEvent(
         raw_type=getattr(event, "type", None),
         raw_payload=getattr(event, "payload", None),
         reason=reason,
+        type_observable=type_observable,
         notes=notes,
     )
