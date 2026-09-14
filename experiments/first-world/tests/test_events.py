@@ -90,6 +90,22 @@ def test_event_without_observable_type_is_preserved():
     assert pending[0].payload_observable is False
 
 
+def test_type_and_payload_observability_vary_independently():
+    class TypeOnlyEvent:
+        def __init__(self, type):
+            self.type = type
+
+    store = EventStore()
+    event = TypeOnlyEvent(type=None)
+    store.add(event)
+
+    pending = store.pending()
+    assert len(pending) == 1
+    assert pending[0].reason == "event type is unknown"
+    assert pending[0].type_observable is True
+    assert pending[0].payload_observable is False
+
+
 def test_preservation_records_when_the_observation_was_made():
     event = Event(type=None, payload={"value": 1})
 
