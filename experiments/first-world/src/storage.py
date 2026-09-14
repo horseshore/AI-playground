@@ -7,11 +7,20 @@ class EventStore:
         self.pending_inspection = []
 
     def add(self, event):
-        if not getattr(event, "type", None):
+        if not hasattr(event, "type"):
+            self.preserve(
+                preserve_for_later_inspection(
+                    event, reason="event type is not observable"
+                )
+            )
+            return
+
+        if not event.type:
             self.preserve(
                 preserve_for_later_inspection(event, reason="event type is unknown")
             )
             return
+
         self.events.append(event)
 
     def preserve(self, event):
