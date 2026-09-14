@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from src.events import Event, preserve_for_later_inspection
 from src.storage import EventStore
 
@@ -78,3 +80,17 @@ def test_event_without_observable_type_is_preserved():
     assert pending[0].raw_type is None
     assert pending[0].raw_payload is None
     assert pending[0].reason == "event type is unknown"
+
+
+def test_preservation_records_when_the_observation_was_made():
+    event = Event(type=None, payload={"value": 1})
+
+    before = datetime.now(timezone.utc)
+    preserved = preserve_for_later_inspection(
+        event,
+        reason="event information is incomplete",
+    )
+    after = datetime.now(timezone.utc)
+
+    assert before <= preserved.observed_at <= after
+    assert preserved.observed_at.tzinfo is timezone.utc
