@@ -131,3 +131,16 @@ def test_preservation_records_when_the_observation_was_made():
 
     assert before <= preserved.observed_at <= after
     assert preserved.observed_at.tzinfo is timezone.utc
+
+
+def test_preservation_keeps_a_snapshot_of_mutable_payload():
+    payload = {"value": [1]}
+    event = Event(type=None, payload=payload)
+
+    preserved = preserve_for_later_inspection(
+        event,
+        reason="event information is incomplete",
+    )
+    payload["value"].append(2)
+
+    assert preserved.raw_payload == {"value": [1]}
