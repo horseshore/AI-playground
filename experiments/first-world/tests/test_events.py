@@ -58,6 +58,19 @@ def test_add_keeps_known_type_events_unchanged():
     assert store.pending() == []
 
 
+def test_known_type_does_not_require_observable_payload():
+    class TypeOnlyEvent:
+        def __init__(self, type):
+            self.type = type
+
+    store = EventStore()
+    event = TypeOnlyEvent(type="known")
+    store.add(event)
+
+    assert store.all() == [event]
+    assert store.pending() == []
+
+
 def test_incomplete_event_can_omit_type_at_construction():
     event = Event(payload={"value": 1})
 
