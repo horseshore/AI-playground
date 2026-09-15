@@ -1,3 +1,4 @@
+from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Mapping
@@ -32,10 +33,10 @@ class PreservedEvent:
 
 def preserve_for_later_inspection(event: Event | Any, *, reason: str,
                                  notes: str | None = None) -> PreservedEvent:
-    """Capture the event as observed without normalizing missing information."""
+    """Capture a snapshot of the event as observed without normalizing missing information."""
     return PreservedEvent(
-        raw_type=getattr(event, "type", None),
-        raw_payload=getattr(event, "payload", None),
+        raw_type=deepcopy(getattr(event, "type", None)),
+        raw_payload=deepcopy(getattr(event, "payload", None)),
         reason=reason,
         type_observable=hasattr(event, "type"),
         payload_observable=hasattr(event, "payload"),
