@@ -133,6 +133,16 @@ def test_preservation_records_when_the_observation_was_made():
     assert preserved.observed_at.tzinfo is timezone.utc
 
 
+def test_pending_returns_copies_that_cannot_corrupt_the_store():
+    store = EventStore()
+    store.add(Event(type=None, payload={"value": 1}))
+
+    pending = store.pending()
+    pending[0].reason = "tampered"
+
+    assert store.pending()[0].reason == "event type is unknown"
+
+
 def test_preservation_keeps_a_snapshot_of_mutable_payload():
     payload = {"value": [1]}
     event = Event(type=None, payload=payload)
