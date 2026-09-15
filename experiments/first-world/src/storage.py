@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 from src.events import preserve_for_later_inspection
 
 
@@ -31,4 +33,4 @@ class EventStore:
         return list(self.events)
 
     def pending(self):
-        return list(self.pending_inspection)
+        return deepcopy(self.pending_inspection)
