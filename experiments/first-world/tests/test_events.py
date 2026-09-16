@@ -71,6 +71,22 @@ def test_known_type_does_not_require_observable_payload():
     assert store.pending() == []
 
 
+def test_known_type_does_not_access_unobservable_payload():
+    class PayloadThatCannotBeObserved:
+        type = "known"
+
+        @property
+        def payload(self):
+            raise RuntimeError("payload is not observable")
+
+    store = EventStore()
+    event = PayloadThatCannotBeObserved()
+    store.add(event)
+
+    assert store.all() == [event]
+    assert store.pending() == []
+
+
 def test_incomplete_event_can_omit_type_at_construction():
     event = Event(payload={"value": 1})
 
