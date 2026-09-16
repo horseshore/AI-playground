@@ -172,6 +172,30 @@ def test_preservation_keeps_a_snapshot_of_mutable_payload():
     assert preserved.raw_payload == {"value": [1]}
 
 
+def test_preservation_observes_type_and_payload_only_once():
+    class CountingEvent:
+        def __init__(self):
+            self.type_reads = 0
+            self.payload_reads = 0
+
+        @property
+        def type(self):
+            self.type_reads += 1
+            return None
+
+        @property
+        def payload(self):
+            self.payload_reads += 1
+            return {"value": 1}
+
+    event = CountingEvent()
+
+    preserve_for_later_inspection(event, reason="event type is unknown")
+
+    assert event.type_reads == 1
+    assert event.payload_reads == 1
+
+
 def test_known_type_is_observed_only_once():
     class SingleObservationEvent:
         def __init__(self):
