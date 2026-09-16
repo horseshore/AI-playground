@@ -34,11 +34,14 @@ class PreservedEvent:
 def preserve_for_later_inspection(event: Event | Any, *, reason: str,
                                  notes: str | None = None) -> PreservedEvent:
     """Capture a snapshot of the event as observed without normalizing missing information."""
+    missing = object()
+    observed_type = getattr(event, "type", missing)
+    observed_payload = getattr(event, "payload", missing)
     return PreservedEvent(
-        raw_type=deepcopy(getattr(event, "type", None)),
-        raw_payload=deepcopy(getattr(event, "payload", None)),
+        raw_type=deepcopy(None if observed_type is missing else observed_type),
+        raw_payload=deepcopy(None if observed_payload is missing else observed_payload),
         reason=reason,
-        type_observable=hasattr(event, "type"),
-        payload_observable=hasattr(event, "payload"),
+        type_observable=observed_type is not missing,
+        payload_observable=observed_payload is not missing,
         notes=notes,
     )
