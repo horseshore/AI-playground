@@ -170,3 +170,22 @@ def test_preservation_keeps_a_snapshot_of_mutable_payload():
     payload["value"].append(2)
 
     assert preserved.raw_payload == {"value": [1]}
+
+
+def test_known_type_is_observed_only_once():
+    class SingleObservationEvent:
+        def __init__(self):
+            self.type_reads = 0
+
+        @property
+        def type(self):
+            self.type_reads += 1
+            return "known"
+
+    store = EventStore()
+    event = SingleObservationEvent()
+
+    store.add(event)
+
+    assert store.all() == [event]
+    assert event.type_reads == 1
