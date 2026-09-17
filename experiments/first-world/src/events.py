@@ -31,17 +31,22 @@ class PreservedEvent:
     notes: str | None = None
 
 
+_MISSING = object()
+
+
 def preserve_for_later_inspection(event: Event | Any, *, reason: str,
-                                 notes: str | None = None) -> PreservedEvent:
+                                 notes: str | None = None,
+                                 observed_type: Any = _MISSING) -> PreservedEvent:
     """Capture a snapshot of the event as observed without normalizing missing information."""
-    missing = object()
-    observed_type = getattr(event, "type", missing)
-    observed_payload = getattr(event, "payload", missing)
+    observed_payload = getattr(event, "payload", _MISSING)
+    if observed_type is _MISSING:
+        observed_type = getattr(event, "type", _MISSING)
+
     return PreservedEvent(
-        raw_type=deepcopy(None if observed_type is missing else observed_type),
-        raw_payload=deepcopy(None if observed_payload is missing else observed_payload),
+        raw_type=deepcopy(None if observed_type is _MISSING else observed_type),
+        raw_payload=deepcopy(None if observed_payload is _MISSING else observed_payload),
         reason=reason,
-        type_observable=observed_type is not missing,
-        payload_observable=observed_payload is not missing,
+        type_observable=observed_type is not _MISSING,
+        payload_observable=observed_payload is not _MISSING,
         notes=notes,
     )

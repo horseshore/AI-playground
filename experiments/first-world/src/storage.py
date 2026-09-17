@@ -15,14 +15,16 @@ class EventStore:
         if event_type is missing:
             self.preserve(
                 preserve_for_later_inspection(
-                    event, reason="event type is not observable"
+                    event, reason="event type is not observable", observed_type=event_type
                 )
             )
             return
 
         if not event_type:
             self.preserve(
-                preserve_for_later_inspection(event, reason="event type is unknown")
+                preserve_for_later_inspection(
+                    event, reason="event type is unknown", observed_type=event_type
+                )
             )
             return
 

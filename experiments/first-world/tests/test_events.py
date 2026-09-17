@@ -213,3 +213,22 @@ def test_known_type_is_observed_only_once():
 
     assert store.all() == [event]
     assert event.type_reads == 1
+
+
+def test_unknown_type_is_not_reobserved_when_preserved():
+    class SingleObservationUnknownEvent:
+        def __init__(self):
+            self.type_reads = 0
+
+        @property
+        def type(self):
+            self.type_reads += 1
+            return None
+
+    store = EventStore()
+    event = SingleObservationUnknownEvent()
+
+    store.add(event)
+
+    assert event.type_reads == 1
+    assert store.pending()[0].raw_type is None
