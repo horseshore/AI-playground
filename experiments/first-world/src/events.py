@@ -31,22 +31,25 @@ class PreservedEvent:
     notes: str | None = None
 
 
-_MISSING = object()
+# Shared with storage.py, so a caller there can pass in a value it already
+# observed via getattr(event, "type", MISSING) without a mismatched sentinel
+# masking a genuinely missing attribute as an observed one.
+MISSING = object()
 
 
 def preserve_for_later_inspection(event: Event | Any, *, reason: str,
                                  notes: str | None = None,
-                                 observed_type: Any = _MISSING) -> PreservedEvent:
+                                 observed_type: Any = MISSING) -> PreservedEvent:
     """Capture a snapshot of the event as observed without normalizing missing information."""
-    observed_payload = getattr(event, "payload", _MISSING)
-    if observed_type is _MISSING:
-        observed_type = getattr(event, "type", _MISSING)
+    observed_payload = getattr(event, "payload", MISSING)
+    if observed_type is MISSING:
+        observed_type = getattr(event, "type", MISSING)
 
     return PreservedEvent(
-        raw_type=deepcopy(None if observed_type is _MISSING else observed_type),
-        raw_payload=deepcopy(None if observed_payload is _MISSING else observed_payload),
+        raw_type=deepcopy(None if observed_type is MISSING else observed_type),
+        raw_payload=deepcopy(None if observed_payload is MISSING else observed_payload),
         reason=reason,
-        type_observable=observed_type is not _MISSING,
-        payload_observable=observed_payload is not _MISSING,
+        type_observable=observed_type is not MISSING,
+        payload_observable=observed_payload is not MISSING,
         notes=notes,
     )

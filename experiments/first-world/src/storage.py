@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from src.events import preserve_for_later_inspection
+from src.events import MISSING, preserve_for_later_inspection
 
 
 class EventStore:
@@ -9,10 +9,9 @@ class EventStore:
         self.pending_inspection = []
 
     def add(self, event):
-        missing = object()
-        event_type = getattr(event, "type", missing)
+        event_type = getattr(event, "type", MISSING)
 
-        if event_type is missing:
+        if event_type is MISSING:
             self.preserve(
                 preserve_for_later_inspection(
                     event, reason="event type is not observable", observed_type=event_type
