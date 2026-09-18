@@ -232,3 +232,24 @@ def test_unknown_type_is_not_reobserved_when_preserved():
 
     assert event.type_reads == 1
     assert store.pending()[0].raw_type is None
+
+
+def test_unknown_type_routing_uses_the_first_observation():
+    class ChangingTypeEvent:
+        def __init__(self):
+            self.type_reads = 0
+
+        @property
+        def type(self):
+            self.type_reads += 1
+            return None if self.type_reads == 1 else "known"
+
+    store = EventStore()
+    event = ChangingTypeEvent()
+
+    store.add(event)
+
+    assert event.type_reads == 1
+    assert store.all() == []
+    assert store.pending()[0].raw_type is None
+    assert store.pending()[0].reason == "event type is unknown"
