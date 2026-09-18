@@ -253,3 +253,27 @@ def test_unknown_type_routing_uses_the_first_observation():
     assert store.all() == []
     assert store.pending()[0].raw_type is None
     assert store.pending()[0].reason == "event type is unknown"
+
+def test_preservation_uses_supplied_type_observation():
+    class ChangingTypeEvent:
+        def __init__(self):
+            self.type_reads = 0
+            self.payload = {"value": 1}
+
+        @property
+        def type(self):
+            self.type_reads += 1
+            return "later" if self.type_reads > 0 else "never"
+
+    event = ChangingTypeEvent()
+
+    preserved = preserve_for_later_inspection(
+        event,
+        reason="test",
+        observed_type=None,
+    )
+
+    assert event.type_reads == 0
+    assert preserved.raw_type is None
+    assert preserved.type_observable is True
+
