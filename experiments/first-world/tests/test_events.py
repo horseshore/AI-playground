@@ -302,3 +302,16 @@ def test_preservation_uses_supplied_payload_observation():
     assert preserved.raw_payload is None
     assert preserved.payload_observable is True
 
+
+
+def test_pending_inspection_does_not_consume_preserved_event():
+    store = EventStore()
+    store.add(Event(type=None, payload={"value": 1}))
+
+    first = store.pending()
+    second = store.pending()
+
+    assert len(first) == 1
+    assert len(second) == 1
+    assert second[0].raw_payload == {"value": 1}
+    assert second[0].reason == "event type is unknown"
