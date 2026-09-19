@@ -303,7 +303,6 @@ def test_preservation_uses_supplied_payload_observation():
     assert preserved.payload_observable is True
 
 
-
 def test_pending_inspection_does_not_consume_preserved_event():
     store = EventStore()
     store.add(Event(type=None, payload={"value": 1}))
