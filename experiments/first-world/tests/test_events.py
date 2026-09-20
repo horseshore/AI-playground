@@ -255,6 +255,28 @@ def test_unknown_type_routing_uses_the_first_observation():
     assert store.pending()[0].reason == "event type is unknown"
 
 
+def test_missing_type_routing_attempts_observation_only_once():
+    class CountingAbsence:
+        def __init__(self):
+            self.type_attempts = 0
+
+        def __getattr__(self, name):
+            if name == "type":
+                self.type_attempts += 1
+            raise AttributeError(name)
+
+    store = EventStore()
+    event = CountingAbsence()
+
+    store.add(event)
+
+    assert event.type_attempts == 1
+    pending = store.pending()
+    assert pending[0].reason == "event type is not observable"
+    assert pending[0].type_observable is False
+    assert pending[0].raw_type is None
+
+
 def test_preservation_uses_supplied_type_observation():
     class ChangingTypeEvent:
         def __init__(self):
