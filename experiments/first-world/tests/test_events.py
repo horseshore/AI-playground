@@ -314,3 +314,19 @@ def test_pending_inspection_does_not_consume_preserved_event():
     assert len(second) == 1
     assert second[0].raw_payload == {"value": 1}
     assert second[0].reason == "event type is unknown"
+
+
+def test_preserved_observation_does_not_follow_later_event_changes():
+    event = Event(type=None, payload={"value": 1})
+
+    preserved = preserve_for_later_inspection(
+        event,
+        reason="event type is unknown",
+    )
+
+    event.type = "known"
+    event.payload["value"] = 2
+
+    assert preserved.raw_type is None
+    assert preserved.raw_payload == {"value": 1}
+    assert preserved.reason == "event type is unknown"
