@@ -338,6 +338,28 @@ def test_pending_inspection_does_not_consume_preserved_event():
     assert second[0].reason == "event type is unknown"
 
 
+def test_two_observations_keep_distinct_snapshots():
+    payload = {"value": 1}
+    event = Event(type=None, payload=payload)
+
+    first = preserve_for_later_inspection(
+        event,
+        reason="first observation",
+    )
+
+    payload["value"] = 2
+    second = preserve_for_later_inspection(
+        event,
+        reason="second observation",
+    )
+
+    assert first.raw_payload == {"value": 1}
+    assert second.raw_payload == {"value": 2}
+    assert first.reason == "first observation"
+    assert second.reason == "second observation"
+    assert first.observed_at <= second.observed_at
+
+
 def test_preserved_observation_does_not_follow_later_event_changes():
     event = Event(type=None, payload={"value": 1})
 
