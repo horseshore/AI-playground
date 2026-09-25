@@ -40,7 +40,7 @@ class EventStore:
             type=event_type,
             payload=deepcopy(preserved.raw_payload),
         )
-        self.events.append(event)
+        self.add(event)
         return event
 
     def all(self):
