@@ -385,3 +385,16 @@ def test_preserved_snapshot_can_be_reintroduced_as_a_new_event():
     assert restored == Event(type="known", payload={"value": 1})
     assert store.all() == [restored]
     assert store.pending()[0].raw_payload == {"value": 1}
+
+
+def test_reintroducing_with_a_still_unknown_type_is_preserved_not_known():
+    store = EventStore()
+    store.add(Event(type=None, payload={"value": 1}))
+
+    restored = store.reintroduce_pending(0, event_type=None)
+
+    assert restored not in store.all()
+    assert store.all() == []
+    pending = store.pending()
+    assert len(pending) == 2
+    assert all(p.reason == "event type is unknown" for p in pending)
