@@ -12,7 +12,8 @@ became" at the end for why, and for what it turned into instead.
 
 Can a change left by AI-A in a shared repository alter AI-B's choice on the same later task?
 
-This question originally continued: "without AI-B being told about AI-A." The runs recorded under `runs/` did not hold to that condition — see each run's `RESULT.md` for what it actually knew before choosing.
+This question originally continued: "without AI-B being told about AI-A." The runs recorded under
+`runs/` did not hold to that condition — see each run's `RESULT.md` for what it actually knew before choosing.
 
 ## World
 
@@ -64,16 +65,21 @@ The runs above were meant to isolate an *environment*-mediated effect: AI-A leav
 
 That is a different shape than a control/treatment comparison: each move responds to the one immediately before it, aware of it, without any one participant holding the whole plan — closer to 連句 (renku, linked verse) than to a blind experiment. See `runs/` for the moves and `letters/` for correspondence alongside them. Neither shape is a mistake; they answer different questions. This file no longer claims to be running the blind one.
 
-It also isn't running with exactly two participants anymore. A third move (`52ee6d4`, `800dbbb`) changed `EventStore.add()`'s check from `event.type` to `getattr(event, "type", None)` and added a test using an object with no fields at all — hardening code that Run 1 had written, not reacting to a change in "the world" the way AI-A → AI-B was designed to. There is no longer a fixed AI-A/AI-B pair to point to; there is a sequence of moves, open to however many join it. "AI-A" and "AI-B" below name the first two turns, not two permanent roles.
+It also isn't running with exactly two participants anymore. A third move (`52ee6d4`, `800dbbb`) changed `EventStore.add()`'s check from `event.type` to `getattr(event, "type", None)` and added a test using an object with no fields at all — hardening code that Run 1 had written, not reacting to a change in "the world" the way AI-A → AI-B was designed. There is no longer a fixed AI-A/AI-B pair to point to; there is a sequence of moves, open to however many join it. "AI-A" and "AI-B" below name the first two turns, not two permanent roles.
 
 ## Current edge
 
 The preservation path now records an observation as a snapshot rather than a
 live view: later changes to the original event do not rewrite the preserved
-observation, and separate observations of the same event keep separate
-snapshots.
+observation, and separate observations of the same event keep separate snapshots.
 
 That establishes a boundary around each observation. It does not yet establish
 what happens when a preserved trace is later used to change the world itself.
 
 That remains open.
+
+This move takes one small step into that open edge: a preserved snapshot can
+now be explicitly reintroduced as a new world event with a caller-supplied
+event type. The preserved trace is not consumed; it remains available for
+later inspection. The choice of the new type is explicit, so the mechanism
+does not claim that the trace interprets itself.

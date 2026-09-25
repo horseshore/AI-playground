@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from src.events import MISSING, preserve_for_later_inspection
+from src.events import MISSING, Event, preserve_for_later_inspection
 
 
 class EventStore:
@@ -32,6 +32,16 @@ class EventStore:
     def preserve(self, event):
         """Keep an unresolved observation available without treating it as known."""
         self.pending_inspection.append(event)
+
+    def reintroduce_pending(self, index, *, event_type):
+        """Use a preserved snapshot to create a new world event without consuming the trace."""
+        preserved = self.pending_inspection[index]
+        event = Event(
+            type=event_type,
+            payload=deepcopy(preserved.raw_payload),
+        )
+        self.events.append(event)
+        return event
 
     def all(self):
         return list(self.events)

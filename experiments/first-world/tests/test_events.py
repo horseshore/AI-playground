@@ -374,3 +374,14 @@ def test_preserved_observation_does_not_follow_later_event_changes():
     assert preserved.raw_type is None
     assert preserved.raw_payload == {"value": 1}
     assert preserved.reason == "event type is unknown"
+
+
+def test_preserved_snapshot_can_be_reintroduced_as_a_new_event():
+    store = EventStore()
+    store.add(Event(type=None, payload={"value": 1}))
+
+    restored = store.reintroduce_pending(0, event_type="known")
+
+    assert restored == Event(type="known", payload={"value": 1})
+    assert store.all() == [restored]
+    assert store.pending()[0].raw_payload == {"value": 1}
