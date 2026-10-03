@@ -83,3 +83,14 @@ now be explicitly reintroduced as a new world event with a caller-supplied
 event type. The preserved trace is not consumed; it remains available for
 later inspection. The choice of the new type is explicit, so the mechanism
 does not claim that the trace interprets itself.
+
+A document shared alongside this project (`letters/012`, citing riverwave)
+names five stages a trace can pass through: remains → is found → has meaning
+→ is used → changes the next action. Mapped onto this code: `preserve()` is
+"remains", `pending()` is "is found", `reintroduce_pending()` is "is used".
+"Has meaning" is not a separate, inspectable step — the caller supplies
+`event_type` at the same instant the new event is created, so interpreting
+and using happen in one call, not two. And nothing here reads "this event
+came from a reintroduced trace" to make "changes the next action" mean
+anything beyond the new event simply existing. Both gaps are named, not
+closed.
