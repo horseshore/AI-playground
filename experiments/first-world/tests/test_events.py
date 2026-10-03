@@ -398,3 +398,32 @@ def test_reintroducing_with_a_still_unknown_type_is_preserved_not_known():
     pending = store.pending()
     assert len(pending) == 2
     assert all(p.reason == "event type is unknown" for p in pending)
+
+
+def test_two_observations_can_keep_distinct_type_snapshots():
+    class ChangingEvent:
+        def __init__(self):
+            self.type_reads = 0
+            self.payload = {"value": 1}
+
+        @property
+        def type(self):
+            self.type_reads += 1
+            return "known" if self.type_reads == 2 else None
+
+    event = ChangingEvent()
+
+    first = preserve_for_later_inspection(
+        event,
+        reason="first observation",
+    )
+    second = preserve_for_later_inspection(
+        event,
+        reason="second observation",
+    )
+
+    assert first.raw_type is None
+    assert first.type_observable is True
+    assert second.raw_type == "known"
+    assert second.type_observable is True
+    assert first.observed_at <= second.observed_at
