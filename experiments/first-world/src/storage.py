@@ -40,6 +40,7 @@ class EventStore:
             type=event_type,
             payload=deepcopy(preserved.raw_payload),
             source_observed_at=preserved.observed_at,
+            source_observation=deepcopy(preserved),
         )
         self.add(event)
         return event
