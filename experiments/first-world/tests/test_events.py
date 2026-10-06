@@ -382,7 +382,11 @@ def test_preserved_snapshot_can_be_reintroduced_as_a_new_event():
 
     restored = store.reintroduce_pending(0, event_type="known")
 
-    assert restored == Event(type="known", payload={"value": 1})
+    assert restored.type == "known"
+    assert restored.payload == {"value": 1}
+    assert restored.source_observed_at == store.pending()[0].observed_at
+    assert restored.source_observation == store.pending()[0]
+    assert restored.source_observation is not store.pending()[0]
     assert store.all() == [restored]
     assert store.pending()[0].raw_payload == {"value": 1}
 
