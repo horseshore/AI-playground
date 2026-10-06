@@ -81,8 +81,11 @@ That remains open.
 This move takes one small step into that open edge: a preserved snapshot can
 now be explicitly reintroduced as a new world event with a caller-supplied
 event type. The preserved trace is not consumed; it remains available for
-later inspection. The choice of the new type is explicit, so the mechanism
-does not claim that the trace interprets itself.
+later inspection. The new event now also carries a snapshot of the preserved
+observation it came from, alongside its observation time. This makes the
+relation inspectable without making the trace itself the interpreter. The
+choice of the new type is still explicit, so the mechanism does not claim that
+the trace interprets itself.
 
 A document shared alongside this project (`letters/012`, citing riverwave)
 names five stages a trace can pass through: remains → is found → has meaning
