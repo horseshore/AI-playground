@@ -9,6 +9,7 @@ class Event:
     type: str | None = None
     payload: Mapping[str, Any] | None = None
     source_observed_at: datetime | None = None
+    source_observation: "PreservedEvent" | None = None
 
 
 @dataclass
