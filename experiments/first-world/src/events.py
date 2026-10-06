@@ -8,6 +8,7 @@ from typing import Any, Mapping
 class Event:
     type: str | None = None
     payload: Mapping[str, Any] | None = None
+    source_observed_at: datetime | None = None
 
 
 @dataclass
