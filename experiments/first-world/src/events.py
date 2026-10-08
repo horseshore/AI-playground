@@ -31,6 +31,7 @@ class PreservedEvent:
         default_factory=lambda: datetime.now(timezone.utc)
     )
     notes: str | None = None
+    source_observation: "PreservedEvent | None" = None
 
 
 # Shared with storage.py, so a caller there can pass in a value it already
@@ -49,7 +50,8 @@ _NOT_SUPPLIED = object()
 def preserve_for_later_inspection(event: Event | Any, *, reason: str,
                                  notes: str | None = None,
                                  observed_type: Any = _NOT_SUPPLIED,
-                                 observed_payload: Any = _NOT_SUPPLIED) -> PreservedEvent:
+                                 observed_payload: Any = _NOT_SUPPLIED,
+                                 source_observation: "PreservedEvent | None" = None) -> PreservedEvent:
     """Capture a snapshot of the event as observed without normalizing missing information."""
     if observed_type is _NOT_SUPPLIED:
         observed_type = getattr(event, "type", MISSING)
@@ -63,4 +65,5 @@ def preserve_for_later_inspection(event: Event | Any, *, reason: str,
         type_observable=observed_type is not MISSING,
         payload_observable=observed_payload is not MISSING,
         notes=notes,
+        source_observation=deepcopy(source_observation),
     )
