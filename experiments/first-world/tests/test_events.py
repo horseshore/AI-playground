@@ -431,3 +431,22 @@ def test_two_observations_can_keep_distinct_type_snapshots():
     assert second.raw_type == "known"
     assert second.type_observable is True
     assert first.observed_at <= second.observed_at
+
+
+def test_reintroduced_unknown_event_preserves_original_provenance_chain():
+    store = EventStore()
+    store.add(Event(type=None, payload={"value": 1}))
+
+    original = store.pending()[0]
+    restored = store.reintroduce_pending(0, event_type=None)
+
+    pending = store.pending()
+
+    assert len(pending) == 2
+    assert pending[1].raw_payload == {"value": 1}
+    assert pending[1].reason == "event type is unknown"
+    assert pending[1].source_observation == original
+    assert pending[1].source_observation is not pending[0]
+    assert pending[1].source_observation.raw_payload == {"value": 1}
+    assert pending[1].source_observation.observed_at == original.observed_at
+    assert restored.source_observation == original
