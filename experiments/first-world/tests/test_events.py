@@ -450,3 +450,23 @@ def test_reintroduced_unknown_event_preserves_original_provenance_chain():
     assert pending[1].source_observation.raw_payload == {"value": 1}
     assert pending[1].source_observation.observed_at == original.observed_at
     assert restored.source_observation == original
+
+
+def test_preserving_a_reintroduced_event_directly_keeps_its_provenance():
+    store = EventStore()
+    store.add(Event(type=None, payload={"value": 1}))
+    restored = store.reintroduce_pending(0, event_type="known")
+
+    preserved = preserve_for_later_inspection(restored, reason="manual")
+
+    assert preserved.source_observation == restored.source_observation
+    assert preserved.source_observation is not restored.source_observation
+
+
+def test_preserving_an_event_without_provenance_leaves_it_empty():
+    preserved = preserve_for_later_inspection(
+        Event(type=None, payload={"value": 1}),
+        reason="manual",
+    )
+
+    assert preserved.source_observation is None

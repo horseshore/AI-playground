@@ -51,12 +51,14 @@ def preserve_for_later_inspection(event: Event | Any, *, reason: str,
                                  notes: str | None = None,
                                  observed_type: Any = _NOT_SUPPLIED,
                                  observed_payload: Any = _NOT_SUPPLIED,
-                                 source_observation: "PreservedEvent | None" = None) -> PreservedEvent:
+                                 source_observation: Any = _NOT_SUPPLIED) -> PreservedEvent:
     """Capture a snapshot of the event as observed without normalizing missing information."""
     if observed_type is _NOT_SUPPLIED:
         observed_type = getattr(event, "type", MISSING)
     if observed_payload is _NOT_SUPPLIED:
         observed_payload = getattr(event, "payload", MISSING)
+    if source_observation is _NOT_SUPPLIED:
+        source_observation = getattr(event, "source_observation", None)
 
     return PreservedEvent(
         raw_type=deepcopy(None if observed_type is MISSING else observed_type),
