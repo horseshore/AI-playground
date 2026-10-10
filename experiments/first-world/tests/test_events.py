@@ -470,3 +470,32 @@ def test_preserving_an_event_without_provenance_leaves_it_empty():
     )
 
     assert preserved.source_observation is None
+
+
+def test_provenance_chain_survives_multiple_unknown_reintroductions():
+    store = EventStore()
+    store.add(Event(type=None, payload={"value": 1}))
+
+    original = store.pending()[0]
+    second_event = store.reintroduce_pending(0, event_type=None)
+    second_observation = store.pending()[1]
+    third_event = store.reintroduce_pending(1, event_type=None)
+
+    pending = store.pending()
+    third_observation = pending[2]
+
+    assert len(pending) == 3
+    assert third_observation.raw_payload == {"value": 1}
+    assert third_observation.source_observation == second_observation
+    assert third_observation.source_observation is not second_observation
+    assert third_observation.source_observation.source_observation == original
+    assert third_observation.source_observation.source_observation is not original
+    assert third_observation.source_observation.observed_at == second_observation.observed_at
+    assert third_observation.source_observation.source_observation.observed_at == original.observed_at
+    assert second_event.source_observation == original
+    assert third_event.source_observation == second_observation
+
+    # Mutating a returned descendant snapshot must not rewrite its ancestors.
+    third_observation.source_observation.raw_payload["value"] = 99
+    assert store.pending()[0].raw_payload == {"value": 1}
+    assert store.pending()[1].raw_payload == {"value": 1}
