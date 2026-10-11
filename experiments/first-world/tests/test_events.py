@@ -499,3 +499,24 @@ def test_provenance_chain_survives_multiple_unknown_reintroductions():
     third_observation.source_observation.raw_payload["value"] = 99
     assert store.pending()[0].raw_payload == {"value": 1}
     assert store.pending()[1].raw_payload == {"value": 1}
+
+
+def test_same_preserved_trace_can_be_reintroduced_under_different_interpretations():
+    store = EventStore()
+    store.add(Event(type=None, payload={"value": 1}))
+    original = store.pending()[0]
+
+    signal = store.reintroduce_pending(0, event_type="signal")
+    noise = store.reintroduce_pending(0, event_type="noise")
+
+    # The caller's interpretation changes the resulting event, not the trace.
+    assert signal.type == "signal"
+    assert noise.type == "noise"
+    assert signal.payload == noise.payload == {"value": 1}
+    assert signal.source_observation == original
+    assert noise.source_observation == original
+    assert signal.source_observed_at == noise.source_observed_at == original.observed_at
+
+    # Reusing the trace is non-consuming: the original observation remains intact.
+    assert store.pending() == [original]
+    assert store.all() == [signal, noise]
