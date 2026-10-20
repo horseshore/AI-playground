@@ -8,6 +8,7 @@ on:
     branches:
       - main
       - "experiment/pure-memory-phase1-3"
+      - "experiment/pure-memory-startup"
     paths:
       - "experiments/pure-memory/**"
       - ".github/workflows/pure-memory.yml"
@@ -25,3 +26,6 @@ jobs:
       - name: Demo
         working-directory: experiments/pure-memory
         run: python demo.py
+      - name: GitHub-backed startup smoke test
+        working-directory: experiments/pure-memory
+        run: python startup.py
