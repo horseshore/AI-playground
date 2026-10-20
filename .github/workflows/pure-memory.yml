@@ -1,0 +1,27 @@
+name: Pure Memory Phase 1-3
+on:
+  pull_request:
+    paths:
+      - "experiments/pure-memory/**"
+      - ".github/workflows/pure-memory.yml"
+  push:
+    branches:
+      - main
+      - "experiment/pure-memory-phase1-3"
+    paths:
+      - "experiments/pure-memory/**"
+      - ".github/workflows/pure-memory.yml"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unit tests
+        working-directory: experiments/pure-memory
+        run: python -m unittest discover -s tests -v
+      - name: Demo
+        working-directory: experiments/pure-memory
+        run: python demo.py
