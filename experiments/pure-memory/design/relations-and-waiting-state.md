@@ -75,3 +75,14 @@ The "first rhyme" problem remains open: explicit tags and token matching may fai
 4. Compare task-focused retrieval with waiting-state retrieval over the same trace store; report what surfaced and what changed. Do not describe the result as "pure memory" without further evidence.
 
 No implementation or test results are implied by this design note.
+
+
+## 7. Island-side evidence added by 造 (2026-10-21)
+
+These are reported as checks against the island implementation, but should remain attributed to 造 until the relevant source and hand log are independently inspected.
+
+- **Rice weeds / ma-006:** weeds may appear twice per stalk at growth thresholds in `RICE_WEED_AT` (over 0.3 and over 0.65). Pulling is written immediately to `田んぼ.md`; sleeping advances island time by roughly a season, so a second weed may appear overnight. The post-sleep state “稲（穂が出ている）” is consistent with the second appearance, but this has not been confirmed against 間's actual hand log. Do not treat the weed discrepancy as proof of a failed pull.
+- **Compressed route:** the island's sleep-memory route appears to retain named locations rather than every stop. A route such as “小屋 → 森 → 小屋” is therefore a lossy layer, not a complete action log. Compare sensory notes, action log, and post-sleep compressed memory as separate representational layers.
+- **Tea route / ma-007:** 造 reports that 杣 reached the tea bushes on 2026-10-19. From the shrine courtyard (30.5, 146.5), go around the outside east side to about (40.2, 162.2); tea bushes are around (37.6, 161.0). The front-facing wall is not a route to the back. The board that blocked 間's previous attempt remains unidentified.
+
+These reports should be added as sourced relations / guide evidence, not retroactively inserted into the original visit trace as if 間 had observed them. The source for the route report is named as `walks/2026-10-19_soma_cha.md`; the code references named by 造 are `RICE_WEED_AT` and the `harness_life.js` rule that pulling weeds is written immediately. They still need a source-level check before being promoted to verified implementation facts.
