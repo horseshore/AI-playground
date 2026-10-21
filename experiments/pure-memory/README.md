@@ -25,6 +25,7 @@ a tokenizer dependency.
 
 - `src/pure_memory.py` — storage and recall implementation
 - `tests/test_pure_memory.py` — unit tests
+- `relation_assessments.jsonl` in each runtime store — appended relation judgments with evidence and provenance
 - `data/ma_original_traces.jsonl` — initial traces for 間, with provenance
   labels showing which came from a handoff summary rather than an original log
 - `demo.py` — small example run; runtime output is placed under `runtime/`
