@@ -67,9 +67,11 @@ class Trace:
     inferences: tuple[str, ...] = ()
     tags: tuple[str, ...] = ()
     related_trace_ids: tuple[str, ...] = ()
-    one_off: bool = False
+    # Legacy annotation only. None means unassessed; True/False are not inferred from record count.
+    one_off: bool | None = None
     # Keep the distinction between a direct record and a handoff/summary visible.
     provenance_kind: str = "direct_record"
+    one_off_assessment_source: str | None = None
 
 
 @dataclass(frozen=True)
@@ -98,6 +100,20 @@ class RecallEvent:
     interpretation_changed: bool | None = None
     action_changed: bool | None = None
     outcome_note: str | None = None
+    caller_state: str = "unknown"
+    goal_supplied: bool | None = None
+
+
+@dataclass(frozen=True)
+class RelationAssessment:
+    relation_id: str
+    source_trace_id: str
+    target_trace_id: str
+    relation_kind: str
+    proposed_by: str
+    evidence: str
+    status: str = "candidate"
+    created_at: str = field(default_factory=utc_now)
 
 
 class PureMemoryStore:
@@ -109,6 +125,7 @@ class PureMemoryStore:
         self.trace_path = self.root / "traces.jsonl"
         self.memory_path = self.root / "memory_revisions.jsonl"
         self.recall_path = self.root / "recall_events.jsonl"
+        self.relation_path = self.root / "relation_assessments.jsonl"
 
     def traces(self) -> list[Trace]:
         return [
@@ -146,6 +163,37 @@ class PureMemoryStore:
     def recall_events(self) -> list[RecallEvent]:
         return [RecallEvent(**row) for row in _read_jsonl(self.recall_path)]
 
+    def relation_assessments(self) -> list[RelationAssessment]:
+        return [RelationAssessment(**row) for row in _read_jsonl(self.relation_path)]
+
+    def assess_relation(
+        self, *, source_trace_id: str, target_trace_id: str,
+        relation_kind: str, proposed_by: str, evidence: str,
+        status: str = "candidate", relation_id: str | None = None,
+    ) -> RelationAssessment:
+        """Append a sourced relation assessment; a relation never asserts identity by itself."""
+        known = {trace.trace_id for trace in self.traces()}
+        missing = {source_trace_id, target_trace_id} - known
+        if missing:
+            raise ValueError(f"Relation refers to unknown traces: {sorted(missing)}")
+        if source_trace_id == target_trace_id:
+            raise ValueError("A relation assessment must connect two distinct trace IDs")
+        if not relation_kind.strip() or not proposed_by.strip() or not evidence.strip():
+            raise ValueError("relation_kind, proposed_by, and evidence must not be empty")
+        allowed = {"candidate", "accepted", "rejected", "superseded"}
+        if status not in allowed:
+            raise ValueError(f"status must be one of {sorted(allowed)}")
+        row = RelationAssessment(
+            relation_id=relation_id or f"relation-{uuid4().hex}",
+            source_trace_id=source_trace_id, target_trace_id=target_trace_id,
+            relation_kind=relation_kind, proposed_by=proposed_by, evidence=evidence,
+            status=status,
+        )
+        if any(old.relation_id == row.relation_id for old in self.relation_assessments()):
+            raise ValueError(f"relation_id already exists: {row.relation_id}")
+        _append_jsonl(self.relation_path, asdict(row))
+        return row
+
     def append_trace(self, trace: Trace) -> Trace:
         if not trace.trace_id.strip():
             raise ValueError("trace_id must not be empty")
@@ -166,8 +214,9 @@ class PureMemoryStore:
         inferences: Iterable[str] = (),
         tags: Iterable[str] = (),
         related_trace_ids: Iterable[str] = (),
-        one_off: bool = False,
+        one_off: bool | None = None,
         provenance_kind: str = "direct_record",
+        one_off_assessment_source: str | None = None,
     ) -> Trace:
         trace = Trace(
             trace_id=trace_id or f"trace-{uuid4().hex}",
@@ -179,6 +228,7 @@ class PureMemoryStore:
             related_trace_ids=tuple(related_trace_ids),
             one_off=one_off,
             provenance_kind=provenance_kind,
+            one_off_assessment_source=one_off_assessment_source,
         )
         return self.append_trace(trace)
 
@@ -226,6 +276,8 @@ class PureMemoryStore:
         limit: int = 6,
         associative_slots: int = 1,
         non_goal_slots: int = 1,
+        caller_state: str = "task_focused",
+        goal_supplied: bool | None = None,
     ) -> list[RecallEvent]:
         """Generate candidates through habitual, associative, and non-goal routes.
 
@@ -234,6 +286,11 @@ class PureMemoryStore:
         """
         if limit < 0 or associative_slots < 0 or non_goal_slots < 0:
             raise ValueError("slot counts and limit must be non-negative")
+        allowed_states = {"task_focused", "waiting", "resting", "pre_sleep", "unknown"}
+        if caller_state not in allowed_states:
+            raise ValueError(f"caller_state must be one of {sorted(allowed_states)}")
+        if goal_supplied is None:
+            goal_supplied = caller_state == "task_focused" and bool(context.strip())
         traces = self.traces()
         if limit == 0 or not traces:
             return []
@@ -304,7 +361,7 @@ class PureMemoryStore:
             key=lambda trace: (
                 trace.trace_id in integrated_ids,
                 usage.get(trace.trace_id, 0),
-                not trace.one_off,
+                trace.one_off is not True,
                 overlap(trace),
                 trace.observed_at,
                 trace.trace_id,
@@ -339,6 +396,8 @@ class PureMemoryStore:
                 context=context,
                 context_tags=tuple(sorted(context_tags)),
                 reason=reason,
+                caller_state=caller_state,
+                goal_supplied=goal_supplied,
             )
             _append_jsonl(self.recall_path, asdict(event))
             result.append(event)

@@ -28,6 +28,43 @@ class PureMemoryTests(unittest.TestCase):
         self.assertEqual(len(self.store.traces()), 1)
         self.assertTrue(self.store.traces()[0].one_off)
 
+
+    def test_unknown_one_off_is_not_assumed_true(self):
+        trace = self.store.record(trace_id="unknown", event="未評価の痕跡", source="test")
+        self.assertIsNone(trace.one_off)
+        self.assertIsNone(self.store.traces()[0].one_off)
+
+    def test_relation_assessment_is_append_only_and_not_identity(self):
+        self.add("a", "海辺で音を聞いた")
+        self.add("b", "森で音を聞いた")
+        relation = self.store.assess_relation(
+            source_trace_id="a", target_trace_id="b",
+            relation_kind="resembles", proposed_by="human",
+            evidence="両方で遠い音を聞いたという記録がある",
+        )
+        self.assertEqual(relation.relation_kind, "resembles")
+        self.assertEqual(len(self.store.relation_assessments()), 1)
+        self.assertNotEqual(relation.relation_kind, "same_event")
+
+    def test_relation_requires_known_distinct_traces_and_evidence(self):
+        self.add("a", "出来事A")
+        with self.assertRaises(ValueError):
+            self.store.assess_relation(source_trace_id="a", target_trace_id="missing",
+                relation_kind="resembles", proposed_by="human", evidence="根拠")
+        self.add("b", "出来事B")
+        with self.assertRaises(ValueError):
+            self.store.assess_relation(source_trace_id="a", target_trace_id="b",
+                relation_kind="resembles", proposed_by="human", evidence="")
+
+    def test_recall_records_caller_state_and_goal_presence(self):
+        self.add("a", "遠い音")
+        candidates = self.store.recall(context="", caller_state="waiting",
+            goal_supplied=False, tags=(), limit=1, associative_slots=0, non_goal_slots=1)
+        self.assertEqual(candidates[0].caller_state, "waiting")
+        self.assertFalse(candidates[0].goal_supplied)
+        stored = self.store.recall_events()[0]
+        self.assertEqual(stored.caller_state, "waiting")
+
     def test_duplicate_trace_ids_are_rejected(self):
         self.add("t1", "一度だけ起きた出来事")
         with self.assertRaises(ValueError):
