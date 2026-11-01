@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TETRIS — a small possibility field</title>
+<style>
+:root{color-scheme:dark;--bg:#10151b;--panel:#19222b;--line:#344452;--ink:#edf3f5;--muted:#9aabb5;--accent:#8bd3c7}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% 0,#24333d 0,#10151b 62%);color:var(--ink);font:15px/1.45 system-ui,sans-serif;display:grid;place-items:center;padding:20px}
+main{width:min(100%,560px)}header{text-align:center;margin-bottom:16px}h1{font-size:clamp(25px,6vw,36px);letter-spacing:.18em;margin:0}header p{margin:5px 0;color:var(--muted);font-size:13px}
+.game{display:grid;grid-template-columns:minmax(0,1fr) 128px;gap:14px;align-items:start}.board-wrap{position:relative;background:#080c10;border:1px solid var(--line);border-radius:12px;padding:8px;box-shadow:0 16px 50px #0006}
+canvas{display:block;width:100%;height:auto;image-rendering:pixelated}.side{display:grid;gap:10px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px}.label{font-size:11px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}.value{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:3px}#next{width:100%;margin-top:7px}
+button{border:1px solid #526674;background:#263641;color:var(--ink);padding:10px 12px;border-radius:9px;font:inherit;cursor:pointer}button:hover{background:#344a57}button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.actions{display:grid;gap:8px}.hint{font-size:12px;color:var(--muted);line-height:1.6}.status{min-height:22px;color:var(--accent);font-size:13px;margin-top:8px}
+.controls{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}.controls button{padding:12px 4px;font-size:18px;touch-action:manipulation}
+footer{text-align:center;color:var(--muted);font-size:11px;margin-top:14px}
+@media(max-width:420px){body{padding:12px}.game{grid-template-columns:minmax(0,1fr) 104px;gap:8px}.panel{padding:8px}.value{font-size:20px}.hint{font-size:11px}}
+</style>
+</head>
+<body>
+<main>
+<header><h1>TETRIS</h1><p>a small possibility field</p></header>
+<section class="game" aria-label="テトリス">
+<div><div class="board-wrap"><canvas id="board" width="300" height="600" aria-label="ゲーム盤面"></canvas></div><div class="status" id="status" aria-live="polite">スタートを押してください</div></div>
+<aside class="side">
+<div class="panel"><div class="label">Score</div><div class="value" id="score">0</div></div>
+<div class="panel"><div class="label">Lines</div><div class="value" id="lines">0</div></div>
+<div class="panel"><div class="label">Level</div><div class="value" id="level">1</div></div>
+<div class="panel"><div class="label">Next</div><canvas id="next" width="120" height="100"></canvas></div>
+<div class="actions"><button id="start">スタート / リスタート</button><button id="pause">一時停止</button></div>
+<div class="panel hint">← → 移動<br>↑ 回転<br>↓ 早く落とす<br>Space 一気に落とす<br>P 一時停止</div>
+</aside>
+</section>
+<div class="controls" aria-label="タッチ操作"><button data-key="left" aria-label="左">←</button><button data-key="rotate" aria-label="回転">↻</button><button data-key="right" aria-label="右">→</button><button data-key="down" aria-label="下">↓</button></div>
+<footer>ひとつの盤面、いくつもの置き方。選択が次の地形になる。</footer>
+</main>
+<script>
+(() => {
+const W=10,H=20,S=30, COLORS={I:'#65c9d0',O:'#e9ca70',T:'#ad8bd8',S:'#85c99a',Z:'#df8585',J:'#779fe0',L:'#e7a66f'};
+const SHAPES={
+ I:[[1,1,1,1]], O:[[1,1],[1,1]], T:[[0,1,0],[1,1,1]],
+ S:[[0,1,1],[1,1,0]], Z:[[1,1,0],[0,1,1]],
+ J:[[1,0,0],[1,1,1]], L:[[0,0,1],[1,1,1]]
+};
+const boardCanvas=document.querySelector('#board'),ctx=boardCanvas.getContext('2d');
+const nextCanvas=document.querySelector('#next'),nctx=nextCanvas.getContext('2d');
+const $=id=>document.getElementById(id);
+let grid,piece,next,score,lines,level,running,paused,over,dropCounter,lastTime=0,raf=0;
+const clone=m=>m.map(r=>r.slice());
+function randomPiece(){const keys=Object.keys(SHAPES),type=keys[Math.floor(Math.random()*keys.length)],matrix=clone(SHAPES[type]);return {type,matrix,x:Math.floor((W-matrix[0].length)/2),y:0};}
+function reset(){grid=Array.from({length:H},()=>Array(W).fill(null));piece=randomPiece();next=randomPiece();score=0;lines=0;level=1;dropCounter=0;running=true;paused=false;over=false;$('status').textContent='ブロックを置いてみよう';$('pause').textContent='一時停止';updateStats();draw();cancelAnimationFrame(raf);lastTime=0;raf=requestAnimationFrame(loop);}
+function updateStats(){$('score').textContent=score.toLocaleString();$('lines').textContent=lines;$('level').textContent=level;}
+function collide(p,dx=0,dy=0,m=p.matrix){for(let y=0;y<m.length;y++)for(let x=0;x<m[y].length;x++)if(m[y][x]){const nx=p.x+x+dx,ny=p.y+y+dy;if(nx<0||nx>=W||ny>=H||(ny>=0&&grid[ny][nx]))return true;}return false;}
+function merge(){piece.matrix.forEach((row,y)=>row.forEach((v,x)=>{if(v&&piece.y+y>=0)grid[piece.y+y][piece.x+x]=piece.type;}));}
+function clearLines(){let count=0;grid=grid.filter(row=>{if(row.every(Boolean)){count++;return false;}return true;});while(grid.length<H)grid.unshift(Array(W).fill(null));if(count){lines+=count;score+=[0,100,300,500,800][count]*level;level=1+Math.floor(lines/10);updateStats();$('status').textContent=count+' ライン消去';}}
+function spawn(){piece=next;next=randomPiece();drawNext();if(collide(piece)){over=true;running=false;$('status').textContent='ゲームオーバー — もう一度？';}}
+function lock(){merge();clearLines();spawn();}
+function move(dx,dy){if(!running||paused)return;if(!collide(piece,dx,dy)){piece.x+=dx;piece.y+=dy;draw();}else if(dy===1)lock();}
+function rotate(){if(!running||paused)return;const m=piece.matrix[0].map((_,i)=>piece.matrix.map(row=>row[i]).reverse());for(const kick of [0,-1,1,-2,2])if(!collide(piece,kick,0,m)){piece.matrix=m;piece.x+=kick;draw();return;}}
+function hardDrop(){if(!running||paused)return;let d=0;while(!collide(piece,0,1)){piece.y++;d++;}score+=d*2;updateStats();lock();draw();}
+function softDrop(){if(!running||paused)return;if(!collide(piece,0,1)){piece.y++;score++;updateStats();}else lock();draw();}
+function drawCell(c,x,y,size=S){if(!c)return;ctx.fillStyle=COLORS[c];ctx.fillRect(x*size+1,y*size+1,size-2,size-2);ctx.fillStyle='#ffffff24';ctx.fillRect(x*size+3,y*size+3,size-6,3);ctx.strokeStyle='#07101766';ctx.strokeRect(x*size+1.5,y*size+1.5,size-3,size-3);}
+function draw(){ctx.fillStyle='#080c10';ctx.fillRect(0,0,300,600);ctx.strokeStyle='#ffffff0c';ctx.lineWidth=1;for(let x=1;x<W;x++){ctx.beginPath();ctx.moveTo(x*S,0);ctx.lineTo(x*S,600);ctx.stroke();}for(let y=1;y<H;y++){ctx.beginPath();ctx.moveTo(0,y*S);ctx.lineTo(300,y*S);ctx.stroke();}
+grid.forEach((r,y)=>r.forEach((v,x)=>drawCell(v,x,y)));if(piece){piece.matrix.forEach((r,y)=>r.forEach((v,x)=>{if(v&&piece.y+y>=0)drawCell(piece.type,piece.x+x,piece.y+y);}));}
+if(paused||over){ctx.fillStyle='#05090dcc';ctx.fillRect(0,0,300,600);ctx.fillStyle='#edf3f5';ctx.textAlign='center';ctx.font='bold 22px system-ui';ctx.fillText(paused?'PAUSED':'GAME OVER',150,285);}}
+function drawNext(){nctx.fillStyle='#19222b';nctx.fillRect(0,0,120,100);const m=next.matrix,cell=20,ox=(120-m[0].length*cell)/2,oy=(100-m.length*cell)/2;nctx.fillStyle=COLORS[next.type];m.forEach((r,y)=>r.forEach((v,x)=>{if(v){nctx.fillRect(ox+x*cell+1,oy+y*cell+1,cell-2,cell-2);nctx.fillStyle='#ffffff24';nctx.fillRect(ox+x*cell+3,oy+y*cell+3,cell-6,2);nctx.fillStyle=COLORS[next.type];}}));}
+function loop(t=0){if(!running)return;if(!paused){const delta=t-lastTime;dropCounter+=delta;if(dropCounter>Math.max(90,800-(level-1)*65)){move(0,1);dropCounter=0;}}lastTime=t;draw();raf=requestAnimationFrame(loop);}
+function togglePause(){if(!running)return;paused=!paused;$('pause').textContent=paused?'再開':'一時停止';$('status').textContent=paused?'一時停止中':'ゲーム中';draw();}
+function action(k){if(k==='left')move(-1,0);if(k==='right')move(1,0);if(k==='down')softDrop();if(k==='rotate')rotate();if(k==='drop')hardDrop();}
+document.addEventListener('keydown',e=>{const map={ArrowLeft:'left',ArrowRight:'right',ArrowDown:'down',ArrowUp:'rotate',' ':'drop'};if(map[e.key]){e.preventDefault();action(map[e.key]);}if(e.key.toLowerCase()==='p')togglePause();if(e.key==='Enter'&&(!running||over))reset();});
+document.querySelectorAll('[data-key]').forEach(b=>{const k=b.dataset.key;b.addEventListener('pointerdown',e=>{e.preventDefault();action(k);});});
+$('start').addEventListener('click',reset);$('pause').addEventListener('click',togglePause);
+grid=Array.from({length:H},()=>Array(W).fill(null));piece=null;next=randomPiece();drawNext();draw();
+})();
+</script>
+</body>
+</html>
